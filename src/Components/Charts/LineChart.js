@@ -4,24 +4,25 @@ let sprintName = [];
 function LineChart(props) {
     const chartName = props.chartName;
     let chartData = props.data;
+    debugger;
     let series = [{
         name: props.seriesName,
         type: 'column',
-        data: chartData.storyPoints
+        data: props.fullChart ? chartData.totalDeliveredStorypointTotal : chartData.iBMStoryPoints
     }, {
         name: props.defectName,
         type: 'column',
-        data:  chartData.defectsPoints
+        data: props.fullChart ? chartData.totalDefectsPointsTotal : chartData.iBMDefectsPoints
     }, {
-        name:props.avgSpName,
+        name: props.avgSpName,
         type: 'line',
-        data: chartData.avgSp
-        },
-        {
-            name: props.linearName,
-            type: 'line',
-            data: chartData.linear
-        }];
+        data: props.fullChart ? chartData.totalAvgSp : chartData.iBMAvgSp
+    },
+    {
+        name: props.linearName,
+        type: 'line',
+        data: chartData.linear
+    }];
     let options = {
         chart: {
             height: 350,
@@ -51,12 +52,12 @@ function LineChart(props) {
         },
         dataLabels: {
             enabled: true,
-            enabledOnSeries: [0,1,2,3]
-          },
+            enabledOnSeries: [0, 1, 2, 3]
+        },
         // labels: ['21.16 (Aug)', '21.17 (Aug)', '21.18 (Aug)', '21.19 (Aug)',
         // '21.20 (Aug)', '21.21 (Aug)', '21.22 (Aug)', '21.23 (Aug)', 
         // ],
-         labels:chartData.series,
+        labels: chartData.series,
         markers: {
             size: 0
         },
@@ -82,8 +83,8 @@ function LineChart(props) {
                 }
             }
         }
-    } 
-    return (<div id="chart" className="chartTitle"> { props.chartName} Velocity V/S Defects
+    }
+    return (<div id="chart" className="chartTitle"> {props.chartName} Velocity V/S Defects
         <ReactApexChart options={options} series={series} type="line" height={350} />
     </div>)
 }
