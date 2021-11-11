@@ -6,7 +6,7 @@ import CreateTab from '../Tabs/CreateTab';
 import config from '../../Utility/Config';
 import Dashboard from "../Dashboard/Dashboard";
 let requiredData = {};
-let uploadedFileArray = [];
+let uploadedFileArray = []; 
 function SearchPanel(props) {
     let comingConfig = config;
     const [uploadedFile, setUploadedFile] = useState();
@@ -64,6 +64,16 @@ function SearchPanel(props) {
         } 
         return sp;
     }
+   
+    const generateDeveploersData = (parsedData, statusChange) => {
+        let obj = {};
+        parsedData.forEach(item => {
+            if (!obj[item.Developer]) {
+                obj[item.Developer] = item.Developer;
+            }
+        });
+        return obj;
+    }
     const exportedData = (data, sprintName, fileName) => {
         if (!uploadedFileArray.includes(fileName)) {
             uploadedFileArray.push(fileName);
@@ -71,7 +81,7 @@ function SearchPanel(props) {
         } 
         let parsedData = JSON.parse(data);
         let iBMDeliveredStorypoint = generateStoryPointData(parsedData, true);
-        let totalDeliveredStorypoint = generateStoryPointData(parsedData, false);
+        let totalDeliveredStorypoint = generateStoryPointData(parsedData, false); 
         let dataObj = {
             TotalDeliveredStorypoint: totalDeliveredStorypoint,
             TotalDeliveredStorypointTotal: Object.values(totalDeliveredStorypoint).reduce((a, b) => a + b),
@@ -80,7 +90,8 @@ function SearchPanel(props) {
             TotalResolvedDefects: generatIssueTypeGroupData(parsedData, false),
             IBMResolvedDefects: generatIssueTypeGroupData(parsedData, true),
             iBMAvgSP: getavgSP(iBMDeliveredStorypoint),
-            totalAvgSP: getavgSP(totalDeliveredStorypoint)
+            totalAvgSP: getavgSP(totalDeliveredStorypoint),
+            deveploers:generateDeveploersData(parsedData)
         }
         if (!requiredData[fileName]) {
             requiredData[fileName] = {
@@ -89,7 +100,8 @@ function SearchPanel(props) {
         } else if (requiredData[fileName]) {
             requiredData[fileName][sprintName] = dataObj
         }
-    } 
+    }
+    console.log('requiredData',requiredData)
     return <>
         <Accordion defaultActiveKey="0">
             <Accordion.Item eventKey="0">

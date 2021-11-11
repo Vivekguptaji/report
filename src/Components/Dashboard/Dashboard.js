@@ -1,8 +1,37 @@
-import { Card, Col, Row ,Container} from "react-bootstrap";
+import { Card, Col, Row ,Container, Tab,Tabs} from "react-bootstrap";
 import LineChart from "../Charts/LineChart";
 import Config from "../../Utility/Config";
 import { TramRounded } from "@material-ui/icons";
- 
+import StoryPointReport from "../Reports/StoryPointReport";
+import ResourcesPerformance from "../ResourcesPerformance/ResourcesPerformance";
+let reports = {
+    aem: {
+        columns: [
+            { title: 'Resource Name', field: 'resourceName' },
+            { title: '21.15(Aug)', field: '21.15(Aug)' },
+            { title: '21.16(Aug)', field: '21.16(Aug)' },
+            { title: '21.17(Aug)', field: '21.17(Aug)' },
+            { title: '21.18(Aug)', field: '21.18(Aug)' }],
+        data: [{
+            resourceName: 'Vivek',
+            ['21.15(Aug)']: 9,
+            ['21.16(Aug)']: 10,
+            ['21.17(Aug)']: 30,
+            ['21.18(Aug)']: 7
+        
+        },{
+            resourceName: 'Amit',
+            ['21.15(Aug)']: 9,
+            ['21.16(Aug)']: 10,
+            ['21.17(Aug)']: 30,
+            ['21.18(Aug)']: 7
+        
+        }]
+    },
+    ui: {},
+    fullstack: {},
+    oms: {}
+}
 const getStoryPoints = (values) => {
     let obj = {
         iBMDeliveredStorypointTotal: 0,
@@ -47,8 +76,7 @@ const getAvgSp = (values) => {
         totalAvgSPArray.push(element['totalAvgSP'])
     }); 
     let ibmSP = Math.round(ibmAvgSPArray.reduce((a, b) => a + b) / ibmAvgSPArray.length);
-    let totalSP = Math.round(totalAvgSPArray.reduce((a, b) => a + b) / totalAvgSPArray.length);
-    debugger;
+    let totalSP = Math.round(totalAvgSPArray.reduce((a, b) => a + b) / totalAvgSPArray.length); 
     return obj = {
         ibmAvgSP: Array(ibmAvgSPArray.length).fill(ibmSP),
         totalAvgSP: Array(totalAvgSPArray.length).fill(totalSP)
@@ -74,62 +102,119 @@ const getChartData = (dataObj) => {
     }
     return chartDataObj;
 }
-function Dashboard(props) { 
-    let dashboardData = props.data;
-    debugger;
+const getReportData = (dataObj) => { 
+    let columnArray = [{ title: 'Resource Name', field: 'deveploer' }];
+    let columnsObj = Object.keys(dataObj);
+    let dataArray = [];
+    let deveploersArray = [];
+    columnsObj.forEach(item => {
+        let values = dataObj[item]['TotalDeliveredStorypoint'];
+        columnArray.push({ title: item, field: item });
+    })
+    for (let key in dataObj) { 
+        let devps = Object.keys(dataObj[key]['deveploers']);
+        for (let i = 0; i < devps.length; i++) {
+            if (!deveploersArray.includes(devps[i])) {
+                deveploersArray.push(devps[i])
+            }
+        } 
+    }
+    let newObj = [];
+    deveploersArray.forEach(dev => { 
+        for (let key in dataObj) {
+            let points = dataObj[key]['TotalDeliveredStorypoint'][dev] === undefined ?0 :dataObj[key]['TotalDeliveredStorypoint'][dev];
+         
+            let index = newObj.findIndex(item => item.deveploer === dev);
+            if (index !== -1) {
+                let values = newObj[index];
+                values[key] = points;
+                newObj[index] = values;
+            }
+            else {
+                newObj.push({ deveploer: dev, [key]: points });
+            }
+        }
+    }) 
+    return {
+        columns: columnArray,
+        data: newObj
+    }
+}
+function Dashboard(props) {
+    let dashboardData = props.data; 
     let omsDataObj = {}
     let aemDataObj = {}
     let fullstackDataObj = {}
     let uiDataObj = {};
     let dataObj = {};
-    for (let key in dashboardData) { 
-        dataObj = dashboardData[key];
-        if (key.toLowerCase().indexOf('aem') != -1) { 
+    let aemReportObj = {};
+    let omsReportObj = {};
+    let uiReportObj = {};
+    let fullStackReportObj = {}
+    for (let key in dashboardData) {
+        dataObj = dashboardData[key]; 
+        if (key.toLowerCase().indexOf('aem') != -1) {
             aemDataObj = getChartData(dataObj);
+            aemReportObj = getReportData(dataObj); 
         }
         else if (key.toLowerCase().indexOf('oms') != -1) {
             omsDataObj = getChartData(dataObj);
-        } 
+            omsReportObj = getReportData(dataObj); 
+        }
         else if (key.toLowerCase().indexOf('ui') != -1) {
             uiDataObj = getChartData(dataObj);
-        } 
+            uiReportObj = getReportData(dataObj);
+        }
         else if (key.toLowerCase().indexOf('fullstack') != -1) {
             fullstackDataObj = getChartData(dataObj);
+            fullStackReportObj =  getReportData(dataObj);
         }
     } 
-    return <>
-        <Card border="dark" style={{ margin: '0.5rem' }}>
-            <Card.Header>IBM Delivery Metrics</Card.Header>
-            <Card.Body>
-                <Container>
-                    <Row>
-                        {Object.keys(omsDataObj).length > 0 && <Col><LineChart fullChart={ false}  data={omsDataObj} linearName ='Linear (IBM Delivered StoryPoint)' avgSpName= 'AVG SP' chartName='IBM OMS' defectName ='IBM Resolved Defects' seriesName="IBM Delivered StoryPoint"></LineChart></Col>}
-                        {Object.keys(aemDataObj).length > 0 && <Col><LineChart fullChart={ false}  data={aemDataObj} chartName='IBM AEM'  linearName ='Linear (IBM Delivered StoryPoint)' avgSpName= 'AVG SP'   defectName ='IBM Resolved Defects' seriesName="IBM Delivered StoryPoint"></LineChart></Col>}
+    return <Tabs
+        transition={false}
+        id="noanim-tab-example"
+        className="mb-3"
+    >
+        <Tab eventKey="Dashboard" key="Dashboard" title="Dashboard">
+            <Card border="dark" style={{ margin: '0.5rem' }}>
+                <Card.Header>IBM Delivery Metrics</Card.Header>
+                <Card.Body>
+                    <Container> 
+                        <Row>
+                            {Object.keys(omsDataObj).length > 0 && <Col><LineChart fullChart={false} data={omsDataObj} linearName='Linear (IBM Delivered StoryPoint)' avgSpName='AVG SP' chartName='IBM OMS' defectName='IBM Resolved Defects' seriesName="IBM Delivered StoryPoint"></LineChart></Col>}
+                            {Object.keys(aemDataObj).length > 0 && <Col><LineChart fullChart={false} data={aemDataObj} chartName='IBM AEM' linearName='Linear (IBM Delivered StoryPoint)' avgSpName='AVG SP' defectName='IBM Resolved Defects' seriesName="IBM Delivered StoryPoint"></LineChart></Col>}
                         
-                    </Row>
-                    <Row> 
-                        {Object.keys(fullstackDataObj).length > 0 && <Col><LineChart fullChart={ false}  data={fullstackDataObj} chartName='IBM Fullstack'  linearName ='Linear (IBM Delivered StoryPoint)' avgSpName= 'AVG SP'   defectName ='IBM Resolved Defects' seriesName="IBM Delivered StoryPoint"></LineChart></Col>}
-                        {Object.keys(uiDataObj).length > 0 && <Col><LineChart fullChart={ false}  data={uiDataObj} chartName='IBM Frontend'  linearName ='Linear (IBM Delivered StoryPoint)' avgSpName= 'AVG SP'   defectName ='IBM Resolved Defects' seriesName="IBM Delivered StoryPoint"></LineChart></Col>}
-                    </Row>
-                </Container>
-            </Card.Body>
-        </Card>
-         <Card border="dark" style={{ margin: '0.5rem' }}>
-            <Card.Header>Overall Team Delivery Metrics</Card.Header>
-            <Card.Body>
-            <Container>
-                    <Row>
-                        {Object.keys(omsDataObj).length > 0 && <Col><LineChart data={omsDataObj} fullChart={ true} chartName='Total OMS'  linearName ='Linear (Total Delivered StoryPoint)' avgSpName= 'AVG SP'   defectName ='Total Resolved Defects' seriesName="Total Delivered StoryPoint"></LineChart></Col>}
-                        {Object.keys(aemDataObj).length > 0 && <Col><LineChart data={aemDataObj} fullChart={ true}  chartName='Total AEM'  linearName ='Linear (Total Delivered StoryPoint)' avgSpName= 'AVG SP'  defectName ='Total Resolved Defects' seriesName="Total Delivered StoryPoint" ></LineChart></Col>}
+                        </Row>
+                        <Row>
+                            {Object.keys(fullstackDataObj).length > 0 && <Col><LineChart fullChart={false} data={fullstackDataObj} chartName='IBM Fullstack' linearName='Linear (IBM Delivered StoryPoint)' avgSpName='AVG SP' defectName='IBM Resolved Defects' seriesName="IBM Delivered StoryPoint"></LineChart></Col>}
+                            {Object.keys(uiDataObj).length > 0 && <Col><LineChart fullChart={false} data={uiDataObj} chartName='IBM Frontend' linearName='Linear (IBM Delivered StoryPoint)' avgSpName='AVG SP' defectName='IBM Resolved Defects' seriesName="IBM Delivered StoryPoint"></LineChart></Col>}
+                        </Row>
+                    </Container>
+                </Card.Body>
+            </Card>
+            <Card border="dark" style={{ margin: '0.5rem' }}>
+                <Card.Header>Overall Team Delivery Metrics</Card.Header>
+                <Card.Body>
+                    <Container>
+                        <Row>
+                            {Object.keys(omsDataObj).length > 0 && <Col><LineChart data={omsDataObj} fullChart={true} chartName='Total OMS' linearName='Linear (Total Delivered StoryPoint)' avgSpName='AVG SP' defectName='Total Resolved Defects' seriesName="Total Delivered StoryPoint"></LineChart></Col>}
+                            {Object.keys(aemDataObj).length > 0 && <Col><LineChart data={aemDataObj} fullChart={true} chartName='Total AEM' linearName='Linear (Total Delivered StoryPoint)' avgSpName='AVG SP' defectName='Total Resolved Defects' seriesName="Total Delivered StoryPoint" ></LineChart></Col>}
                         
-                    </Row>
-                    <Row> 
-                        {Object.keys(fullstackDataObj).length > 0 && <Col><LineChart data={fullstackDataObj} fullChart={ true}  chartName='Total Fullstack'  linearName ='Linear (Total Delivered StoryPoint)' avgSpName= 'AVG SP'   defectName ='Total Resolved Defects' seriesName="Total Delivered StoryPoint" ></LineChart></Col>}
-                        {Object.keys(uiDataObj).length > 0 && <Col><LineChart data={uiDataObj} fullChart={ true}  chartName='Total Frontend'  linearName ='Linear (Total Delivered StoryPoint)' avgSpName= 'AVG SP'   defectName ='Total Resolved Defects' seriesName="Total Delivered StoryPoint"></LineChart></Col>}
-                    </Row>
-                </Container>
-            </Card.Body>
-        </Card>  
-    </>
+                        </Row>
+                        <Row>
+                            {Object.keys(fullstackDataObj).length > 0 && <Col><LineChart data={fullstackDataObj} fullChart={true} chartName='Total Fullstack' linearName='Linear (Total Delivered StoryPoint)' avgSpName='AVG SP' defectName='Total Resolved Defects' seriesName="Total Delivered StoryPoint" ></LineChart></Col>}
+                            {Object.keys(uiDataObj).length > 0 && <Col><LineChart data={uiDataObj} fullChart={true} chartName='Total Frontend' linearName='Linear (Total Delivered StoryPoint)' avgSpName='AVG SP' defectName='Total Resolved Defects' seriesName="Total Delivered StoryPoint"></LineChart></Col>}
+                        </Row>
+                    </Container>
+                </Card.Body>
+            </Card>
+        </Tab>
+        <Tab eventKey="Resources" key="Resources" title="Resource Performance">
+            <ResourcesPerformance data={aemReportObj} reportName ="AEM Stack" ></ResourcesPerformance>
+            <ResourcesPerformance data={aemReportObj} reportName="OMS Stack"></ResourcesPerformance>
+            <ResourcesPerformance data={fullStackReportObj}  reportName ="Fullstack Stack"></ResourcesPerformance>
+            <ResourcesPerformance data={uiReportObj}  reportName ="Forntend Stack"></ResourcesPerformance>
+        </Tab>
+    </Tabs>
 }
 export default Dashboard;

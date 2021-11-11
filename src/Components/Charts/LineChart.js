@@ -3,8 +3,7 @@ import ReactApexChart from "react-apexcharts";
 let sprintName = [];
 function LineChart(props) {
     const chartName = props.chartName;
-    let chartData = props.data;
-    debugger;
+    let chartData = props.data; 
     let series = [{
         name: props.seriesName,
         type: 'column',
