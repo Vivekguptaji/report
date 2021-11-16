@@ -4,6 +4,7 @@ import Config from "../../Utility/Config";
 import { TramRounded } from "@material-ui/icons";
 import StoryPointReport from "../Reports/StoryPointReport";
 import ResourcesPerformance from "../ResourcesPerformance/ResourcesPerformance";
+import BarChart from "../Charts/BarChart";
 let reports = {
     aem: {
         columns: [
@@ -83,7 +84,7 @@ const getAvgSp = (values) => {
     }
 }
 const getLinear = (values) => {
-    return   [3, 18, 9, 7, 10,15,20]
+    return   [3, 18, 9, 7, 10]
 }
 const getChartData = (dataObj) => {
     let chartDataObj = {}
@@ -102,13 +103,59 @@ const getChartData = (dataObj) => {
     }
     return chartDataObj;
 }
+const getResourcePerformanceChart = (dataObj) => {
+    let deveploersArray = [];
+    for (let key in dataObj) {
+        let devps = Object.keys(dataObj[key]['deveploers']);
+        for (let i = 0; i < devps.length; i++) {
+            if (!deveploersArray.includes(devps[i])) {
+                deveploersArray.push(devps[i])
+            }
+        }
+    }
+    let newObj = [];
+    deveploersArray.forEach(dev => {
+        for (let key in dataObj) {
+            let points = dataObj[key]['TotalDeliveredStorypoint'][dev] === undefined ? 0 : dataObj[key]['TotalDeliveredStorypoint'][dev];
+            let index = newObj.findIndex(item => {
+                let value = item[dev]
+                if (!value) {
+                    return false;
+                }
+                else {
+                    return value["deveploer"] === dev
+                }
+            }); 
+            if (index !== -1) {
+                let values = newObj[index];
+                let newValue = Object.values(values);
+                values[dev].name.push(key);
+                values[dev].data.push(points);
+                
+            }
+            else {
+                let obj = {
+                    [dev]: {
+                        deveploer: dev,
+                        name: [key],
+                        type: 'column',
+                        data: [
+                            points
+                        ]
+                    }
+                }
+                newObj.push(obj);
+            }
+        }
+    })
+    return newObj;
+}
 const getReportData = (dataObj) => { 
     let columnArray = [{ title: 'Resource Name', field: 'deveploer' }];
     let columnsObj = Object.keys(dataObj);
     let dataArray = [];
     let deveploersArray = [];
-    columnsObj.forEach(item => {
-        let values = dataObj[item]['TotalDeliveredStorypoint'];
+    columnsObj.forEach(item => { 
         columnArray.push({ title: item, field: item });
     })
     for (let key in dataObj) { 
@@ -150,12 +197,14 @@ function Dashboard(props) {
     let aemReportObj = {};
     let omsReportObj = {};
     let uiReportObj = {};
-    let fullStackReportObj = {}
-    for (let key in dashboardData) {
+    let fullStackReportObj = {};
+    let aemResourcePerformanceChart = {};
+    for (let key in dashboardData) { 
         dataObj = dashboardData[key]; 
         if (key.toLowerCase().indexOf('aem') != -1) {
             aemDataObj = getChartData(dataObj);
             aemReportObj = getReportData(dataObj); 
+           // aemResourcePerformanceChart = getResourcePerformanceChart(dataObj)
         }
         else if (key.toLowerCase().indexOf('oms') != -1) {
             omsDataObj = getChartData(dataObj);
@@ -210,10 +259,17 @@ function Dashboard(props) {
             </Card>
         </Tab>
         <Tab eventKey="Resources" key="Resources" title="Resource Performance">
-            <ResourcesPerformance data={aemReportObj} reportName ="AEM Stack" ></ResourcesPerformance>
-            <ResourcesPerformance data={aemReportObj} reportName="OMS Stack"></ResourcesPerformance>
-            <ResourcesPerformance data={fullStackReportObj}  reportName ="Fullstack Stack"></ResourcesPerformance>
-            <ResourcesPerformance data={uiReportObj}  reportName ="Forntend Stack"></ResourcesPerformance>
+            {Object.keys(aemReportObj).length > 0 && <ResourcesPerformance data={aemReportObj} reportName="AEM Stack" ></ResourcesPerformance>}
+            {Object.keys(omsReportObj).length > 0 && <ResourcesPerformance data={omsReportObj} reportName="OMS Stack"></ResourcesPerformance>}
+            {Object.keys(fullStackReportObj).length > 0 && <ResourcesPerformance data={fullStackReportObj} reportName="Fullstack Stack"></ResourcesPerformance>}
+            {Object.keys(uiReportObj).length > 0 && <ResourcesPerformance data={uiReportObj} reportName="Forntend Stack"></ResourcesPerformance>}
+        </Tab>
+        <Tab eventKey="ResourcesChar" key="ResourcesChar" title="Resource Performance Chart">
+            {Object.keys(aemReportObj).length > 0 && <BarChart data={aemReportObj} chartName="AEM" ></BarChart>}
+            {Object.keys(omsReportObj).length > 0 && <BarChart data={aemReportObj} chartName="OMS" ></BarChart>}
+            {Object.keys(fullStackReportObj).length > 0 && <BarChart data={fullStackReportObj} chartName="Fullstack" ></BarChart>}
+            {Object.keys(uiReportObj).length > 0 && <BarChart data={uiReportObj} chartName="Front End" ></BarChart>}
+            
         </Tab>
     </Tabs>
 }

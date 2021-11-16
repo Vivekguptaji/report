@@ -42,8 +42,8 @@ function SearchPanel(props) {
         parsedData.forEach(item => {
             let storyPoint = !item['Story Points'] ? 0 : item['Story Points'];
             if (comingConfig.status[[item.Status]]) {
-                if (onlyIBM) {
-                    if (item.Developer.toLowerCase().indexOf('ibm') !== -1) {
+                if (onlyIBM) { 
+                    if (item.Developer && item.Developer.toLowerCase().indexOf('ibm') !== -1) {
                         obj[item.Developer] = 0;
                     }
                     else {
